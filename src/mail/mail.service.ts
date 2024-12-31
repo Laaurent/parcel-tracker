@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GmailClientService } from './gmail-client/gmail-client.service';
 import { Mail } from './entities/mail.entities';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger('MailService');
+  private readonly baseUrl = this.configService.get('APP_BASE_URL');
 
-  constructor(private readonly gmailClientService: GmailClientService) {}
+  constructor(
+    private readonly gmailClientService: GmailClientService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async getMessageDetails(messageId: string): Promise<Mail> {
     this.logger.debug(`Getting details for message ${messageId}`);
@@ -61,7 +66,7 @@ export class MailService {
 
     return detailedMessages.map((msg: Mail) => ({
       id: msg.id,
-      messageUrl: `http://localhost:3000/mail/message/${msg.id}`,
+      messageUrl: `${this.baseUrl}/mail/message/${msg.id}`,
       subject: msg.payload.headers.find((h) => h.name === 'Subject')?.value,
       snippet: msg.snippet,
       attachments: msg.attachments,

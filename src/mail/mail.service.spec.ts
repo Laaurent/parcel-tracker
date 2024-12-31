@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MailService } from './mail.service';
 import { GmailClientService } from './gmail-client/gmail-client.service';
 import { Mail } from './entities/mail.entities';
+import { ConfigService } from '@nestjs/config';
 
 describe('MailService', () => {
   let service: MailService;
@@ -21,6 +22,19 @@ describe('MailService', () => {
         {
           provide: GmailClientService,
           useValue: mockGmailClientService,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              switch (key) {
+                case 'APP_BASE_URL':
+                  return 'http://localhost:3000';
+                default:
+                  return null;
+              }
+            }),
+          },
         },
       ],
     }).compile();
