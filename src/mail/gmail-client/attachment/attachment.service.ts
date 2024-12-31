@@ -6,7 +6,7 @@ import { Payload } from 'src/mail/entities/mail.entities';
 export class AttachmentService {
   private readonly logger = new Logger('AttachmentService');
 
-  private readonly baseUrl = `${this.configService.get('APP_PROTOCOL')}://${this.configService.get('APP_HOST')}:${this.configService.get('APP_PORT')}`;
+  private readonly baseUrl = this.configService.get('APP_BASE_URL');
 
   constructor(private configService: ConfigService) {}
 

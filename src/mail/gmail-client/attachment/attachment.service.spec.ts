@@ -15,12 +15,8 @@ describe('AttachmentService', () => {
           useValue: {
             get: jest.fn((key: string) => {
               switch (key) {
-                case 'APP_PROTOCOL':
-                  return 'http';
-                case 'APP_HOST':
-                  return 'localhost';
-                case 'APP_PORT':
-                  return '3000';
+                case 'APP_BASE_URL':
+                  return 'http://localhost:3000';
                 default:
                   return null;
               }
