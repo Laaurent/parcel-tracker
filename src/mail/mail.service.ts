@@ -13,35 +13,39 @@ export class MailService {
     private readonly configService: ConfigService,
   ) {}
 
-  async getMessageDetails(messageId: string): Promise<Mail> {
+  async getMessageDetails(userId: string, messageId: string): Promise<Mail> {
     this.logger.debug(`Getting details for message ${messageId}`);
 
-    return await this.gmailClientService.getMessageDetails(messageId);
+    return await this.gmailClientService.getMessageDetails(userId, messageId);
   }
 
-  async getMessages(): Promise<Mail[]> {
+  async getMessages(userId: string): Promise<Mail[]> {
     this.logger.debug('Getting messages');
 
-    const messages = await this.gmailClientService.getMessages();
+    const messages = await this.gmailClientService.getMessages(userId);
 
-    return await this.getDetailedMessages(messages);
+    return await this.getDetailedMessages(userId, messages);
   }
 
-  async getAllMessages(query: string = ''): Promise<Mail[]> {
+  async getAllMessages(userId: string, query: string = ''): Promise<Mail[]> {
     this.logger.debug(`Getting all messages with query : ${query}`);
 
-    const messages = await this.gmailClientService.getAllMessages(query);
+    const messages = await this.gmailClientService.getAllMessages(
+      userId,
+      query,
+    );
 
-    return await this.getDetailedMessages(messages);
+    return await this.getDetailedMessages(userId, messages);
   }
 
-  async getAttachments(messageId: string): Promise<any> {
+  async getAttachments(userId: string, messageId: string): Promise<any> {
     this.logger.debug(`Getting attachments for message ${messageId}`);
 
-    return await this.gmailClientService.getAttachments(messageId);
+    return await this.gmailClientService.getAttachments(userId, messageId);
   }
 
   async getAttachmentDetails(
+    userId: string,
     attachmentId: string,
     messageId: string,
   ): Promise<any> {
@@ -50,19 +54,25 @@ export class MailService {
     );
 
     return await this.gmailClientService.getAttachmentDetails(
+      userId,
       attachmentId,
       messageId,
     );
   }
 
-  async getInvoices(): Promise<Mail[]> {
+  async getInvoices(userId: string): Promise<Mail[]> {
     this.logger.debug('Getting invoices');
 
     const messages = await this.gmailClientService.getAllMessages(
+      userId,
       'has:attachment filename:pdf facture OR invoice OR receipt',
     );
 
-    const detailedMessages = await this.getDetailedMessages(messages, true);
+    const detailedMessages = await this.getDetailedMessages(
+      userId,
+      messages,
+      true,
+    );
 
     return detailedMessages.map((msg: Mail) => ({
       id: msg.id,
@@ -73,7 +83,8 @@ export class MailService {
     }));
   }
 
-  private async getDetailedMessages(
+  public async getDetailedMessages(
+    userId: string,
     messages: Mail[],
     withAttachments = false,
   ): Promise<Mail[]> {
@@ -82,6 +93,7 @@ export class MailService {
     return await Promise.all(
       messages.map(async (msg: Mail) => {
         const messageDetails = await this.gmailClientService.getMessageDetails(
+          userId,
           msg.id,
           withAttachments,
         );

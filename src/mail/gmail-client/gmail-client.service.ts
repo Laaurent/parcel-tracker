@@ -1,29 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
-const { google } = require('googleapis');
+import { google } from 'googleapis';
 import { AuthService } from '../../auth/auth.service';
 import { Mail } from '../entities/mail.entities';
 import { AttachmentService } from './attachment/attachment.service';
-import { StateManagerRx } from 'src/state/state-manager-rx';
 
 @Injectable()
 export class GmailClientService {
-  private gmail: any;
   private readonly logger = new Logger('GmailClientService');
-
-  private stateManager = StateManagerRx.getInstance();
 
   constructor(
     private readonly authService: AuthService,
     private readonly attachmentService: AttachmentService,
   ) {}
 
-  async getMessages(query: string = ''): Promise<Mail[]> {
-    if (!this.gmail) {
-      await this._init();
-    }
+  async getMessages(userId: string, query: string = ''): Promise<Mail[]> {
+    const gmailClient = await this._init(userId);
     this.logger.debug(`Getting messages with query : ${query}`);
 
-    const response = await this.gmail.users.messages.list({
+    const response = await gmailClient.users.messages.list({
       userId: 'me',
       q: query,
       maxResults: 100,
@@ -31,13 +25,12 @@ export class GmailClientService {
     return response.data.messages || [];
   }
 
-  async getAttachments(messageId: string): Promise<any> {
-    if (!this.gmail) {
-      await this._init();
-    }
+  async getAttachments(userId: string, messageId: string): Promise<any> {
+    const gmailClient = await this._init(userId);
+
     this.logger.debug(`Getting attachments for message ${messageId}`);
 
-    const response = await this.gmail.users.messages.get({
+    const response = await gmailClient.users.messages.get({
       userId: 'me',
       id: messageId,
     });
@@ -50,17 +43,17 @@ export class GmailClientService {
   }
 
   async getAttachmentDetails(
+    userId: string,
     attachmentId: string,
     messageId: string,
   ): Promise<any> {
-    if (!this.gmail) {
-      await this._init();
-    }
+    const gmailClient = await this._init(userId);
+
     this.logger.debug(
       `Getting details for attachment ${attachmentId} in message ${messageId}`,
     );
 
-    const response = await this.gmail.users.messages.attachments.get({
+    const response = await gmailClient.users.messages.attachments.get({
       userId: 'me',
       messageId,
       id: attachmentId,
@@ -68,10 +61,8 @@ export class GmailClientService {
     return response.data;
   }
 
-  async getAllMessages(query: string = ''): Promise<Mail[]> {
-    if (!this.gmail) {
-      await this._init();
-    }
+  async getAllMessages(userId: string, query: string = ''): Promise<Mail[]> {
+    const gmailClient = await this._init(userId);
 
     this.logger.debug(`Getting all messages with query : ${query}`);
 
@@ -79,7 +70,7 @@ export class GmailClientService {
     let nextPageToken = null;
 
     do {
-      const response = await this.gmail.users.messages.list({
+      const response = await gmailClient.users.messages.list({
         userId: 'me',
         q: query,
         pageToken: nextPageToken,
@@ -95,16 +86,15 @@ export class GmailClientService {
   }
 
   async getMessageDetails(
+    userId: string,
     messageId: string,
     withAttachments = false,
   ): Promise<Mail> {
-    if (!this.gmail) {
-      await this._init();
-    }
+    const gmailClient = await this._init(userId);
 
     this.logger.debug(`Getting message details for message ${messageId}`);
 
-    const response = await this.gmail.users.messages.get({
+    const response = await gmailClient.users.messages.get({
       userId: 'me',
       id: messageId,
     });
@@ -117,17 +107,34 @@ export class GmailClientService {
     return { ...message, attachments };
   }
 
-  async _init(): Promise<void> {
+  public getAuthorizedClient(tokens: any): any {
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.CLIENT_ID,
+      process.env.CLIENT_SECRET,
+      process.env.REDIRECT_URI,
+    );
+
+    oauth2Client.setCredentials(tokens);
+
+    this.logger.log('Gmail client created');
+    return google.gmail({ version: 'v1', auth: oauth2Client });
+  }
+
+  async _init(userId: string): Promise<any> {
     this.logger.log('Creating Gmail client');
     try {
-      const authClient = await this.authService.getAuthClient();
-      if (!authClient) {
-        throw new Error('Utilisateur non authentifié');
+      // Obtenez les tokens pour l'utilisateur depuis le AuthService
+      const tokens = this.authService.getUserTokens(userId);
+
+      /* 100765374900384800587*/
+      if (!tokens) {
+        throw new Error('User tokens not found');
       }
-      this.gmail = google.gmail({ version: 'v1', auth: authClient });
-      this.logger.log('Gmail client created');
+
+      // Initialisez le client Gmail avec les tokens
+      return this.getAuthorizedClient(tokens);
     } catch (err) {
-      this.logger.error(err);
+      throw new Error(`Failed to initialize Gmail client: ${err.message}`);
     }
   }
 }

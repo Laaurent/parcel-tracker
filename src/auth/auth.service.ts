@@ -1,73 +1,54 @@
 import { Injectable, Logger } from '@nestjs/common';
-const fs = require('fs').promises;
-import * as path from 'path';
-const { authenticate } = require('@google-cloud/local-auth');
 import { google } from 'googleapis';
-import { StateManagerRx } from '../state/state-manager-rx';
+import { AuthTokenStore } from '../common/store/auth-token.store';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger('AuthService');
 
-  private readonly stateManager = StateManagerRx.getInstance();
+  private tokenStore = AuthTokenStore.getInstance();
 
-  private readonly SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
-  private readonly TOKEN_PATH = path.join(process.cwd(), 'token.json');
-  private readonly CREDENTIALS_PATH = path.join(
-    process.cwd(),
-    'credentials.json',
+  constructor(private readonly configService: ConfigService) {}
+
+  private oauth2Client = new google.auth.OAuth2(
+    this.configService.get('CLIENT_ID'),
+    this.configService.get('CLIENT_SECRET'),
+    this.configService.get('REDIRECT_URI'),
   );
 
-  constructor() {}
-
-  private async loadSavedCredentialsIfExist() {
-    try {
-      const credentials = this.stateManager.getToken('authCredentials');
-      if (credentials) {
-        return google.auth.fromJSON(credentials);
-      }
-    } catch (err) {
-      this.logger.error('Error loading saved credentials', err);
-      return null;
-    }
-  }
-
-  private async saveCredentials(client) {
-    const content = await fs.readFile(this.CREDENTIALS_PATH);
-    const keys = JSON.parse(content);
-    const key = keys.installed || keys.web;
-    const payload = JSON.stringify({
-      type: 'authorized_user',
-      client_id: key.client_id,
-      client_secret: key.client_secret,
-      refresh_token: client.credentials.refresh_token,
+  // Générer l'URL pour l'authentification Google
+  getGoogleAuthUrl(): string {
+    return this.oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/gmail.readonly',
+      ],
     });
-    this.stateManager.setToken('authCredentials', payload);
   }
 
-  private async authorize() {
-    let client = await this.loadSavedCredentialsIfExist();
-    if (client) {
-      return client;
-    }
-    client = await authenticate({
-      scopes: this.SCOPES,
-      keyfilePath: this.CREDENTIALS_PATH,
-    });
-    if (client.credentials) {
-      await this.saveCredentials(client);
-    }
-    return client;
+  // Gérer le callback Google avec le code reçu
+  async handleGoogleCallback(
+    code: string,
+  ): Promise<{ tokens: any; userInfo: any }> {
+    const { tokens } = await this.oauth2Client.getToken(code);
+    this.oauth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({ version: 'v2', auth: this.oauth2Client });
+    const userInfo = await oauth2.userinfo.get();
+
+    const userId = userInfo.data.id; // Utilisez l'ID Google comme identifiant utilisateur
+
+    this.tokenStore.setToken(userId, tokens); // Stockez les tokens
+
+    return {
+      tokens,
+      userInfo: userInfo.data,
+    };
   }
 
-  async getAuthClient() {
-    try {
-      const authClient = await this.authorize();
-      this.logger.log('Auth client created');
-      return authClient;
-    } catch (error) {
-      this.logger.error('Error creating auth client', error);
-      return null;
-    }
+  getUserTokens(userId: string): any | null {
+    return this.tokenStore.getToken(userId);
   }
 }

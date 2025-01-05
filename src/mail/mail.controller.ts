@@ -1,50 +1,75 @@
-import { Controller, Get, UseInterceptors, Param, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseInterceptors,
+  Param,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { MailService } from './mail.service';
 import { ResponseInterceptor } from '../common/interceptors/response.interceptor';
 import { Mail } from './entities/mail.entities';
+import { AuthGuard } from '../common/guards/auth.gard';
 
 @Controller('mail')
 @UseInterceptors(ResponseInterceptor)
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 
-  @Get('message/:messageId')
+  @UseGuards(AuthGuard)
+  @Get('/:userId/message/:messageId')
   async getMessageDetails(
+    @Param('userId') userId: string,
     @Param('messageId') messageId: string,
   ): Promise<Mail> {
-    return await this.mailService.getMessageDetails(messageId);
+    return await this.mailService.getMessageDetails(userId, messageId);
   }
 
-  @Get('messages')
-  async getMessages(): Promise<Mail[]> {
-    return await this.mailService.getMessages();
+  @UseGuards(AuthGuard)
+  @Get('/:userId/messages')
+  async getMessages(@Param('userId') userId: string): Promise<Mail[]> {
+    return await this.mailService.getMessages(userId);
   }
 
-  @Get('invoices')
-  async getInvoices(): Promise<Mail[]> {
-    return await this.mailService.getInvoices();
+  @UseGuards(AuthGuard)
+  @Get('/:userId/invoices')
+  async getInvoices(@Param('userId') userId: string): Promise<Mail[]> {
+    return await this.mailService.getInvoices(userId);
   }
 
-  @Get('message/:messageId/attachments')
-  async getAttachments(@Param('messageId') messageId: string): Promise<any> {
-    return await this.mailService.getAttachments(messageId);
+  @UseGuards(AuthGuard)
+  @Get('/:userId/message/:messageId/attachments')
+  async getAttachments(
+    @Param('userId') userId: string,
+    @Param('messageId') messageId: string,
+  ): Promise<any> {
+    return await this.mailService.getAttachments(userId, messageId);
   }
 
-  @Get('message/:messageId/attachment/:attachmentId/')
+  @UseGuards(AuthGuard)
+  @Get('/:userId/message/:messageId/attachment/:attachmentId/')
   async getAttachmentDetails(
+    @Param('userId') userId: string,
     @Param('attachmentId') attachmentId: string,
     @Param('messageId') messageId: string,
   ): Promise<any> {
-    return await this.mailService.getAttachmentDetails(attachmentId, messageId);
+    return await this.mailService.getAttachmentDetails(
+      userId,
+      attachmentId,
+      messageId,
+    );
   }
 
-  @Get('message/:messageId/attachment/:attachmentId/download')
+  @UseGuards(AuthGuard)
+  @Get('/:userId/message/:messageId/attachment/:attachmentId/download')
   async downloadAttachment(
+    @Param('userId') userId: string,
     @Param('attachmentId') attachmentId: string,
     @Param('messageId') messageId: string,
     @Res() res,
   ) {
     const attachment = await this.mailService.getAttachmentDetails(
+      userId,
       attachmentId,
       messageId,
     );
