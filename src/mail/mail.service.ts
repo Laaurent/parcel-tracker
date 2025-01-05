@@ -76,7 +76,7 @@ export class MailService {
 
     return detailedMessages.map((msg: Mail) => ({
       id: msg.id,
-      messageUrl: `${this.baseUrl}/mail/message/${msg.id}`,
+      messageUrl: `${this.baseUrl}/mail/${userId}/message/${msg.id}`,
       subject: msg.payload.headers.find((h) => h.name === 'Subject')?.value,
       snippet: msg.snippet,
       attachments: msg.attachments,

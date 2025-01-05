@@ -10,7 +10,11 @@ export class AttachmentService {
 
   constructor(private configService: ConfigService) {}
 
-  lookUpAttachements(messageId: string, payload: Payload): Payload[] {
+  lookUpAttachements(
+    userId: string,
+    messageId: string,
+    payload: Payload,
+  ): Payload[] {
     this.logger.debug(`Looking up attachments for message ${messageId}`);
 
     if (!payload?.parts) {
@@ -23,8 +27,8 @@ export class AttachmentService {
         attachmentId: part.body.attachmentId,
         filename: part.filename,
         mimeType: part.mimeType,
-        attachmentUrl: `${this.baseUrl}/mail/message/${messageId}/attachment/${part.body.attachmentId}`,
-        attachementDownloadUrl: `${this.baseUrl}/mail/message/${messageId}/attachment/${part.body.attachmentId}/download`,
+        attachmentUrl: `${this.baseUrl}/mail/${userId}/message/${messageId}/attachment/${part.body.attachmentId}`,
+        attachementDownloadUrl: `${this.baseUrl}/mail/${userId}/message/${messageId}/attachment/${part.body.attachmentId}/download`,
       }));
   }
 }

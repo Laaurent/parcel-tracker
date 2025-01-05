@@ -37,6 +37,7 @@ export class GmailClientService {
 
     const message = response.data;
     return this.attachmentService.lookUpAttachements(
+      userId,
       messageId,
       message.payload,
     );
@@ -101,7 +102,11 @@ export class GmailClientService {
 
     const message = response.data;
     const attachments = withAttachments
-      ? this.attachmentService.lookUpAttachements(messageId, message.payload)
+      ? this.attachmentService.lookUpAttachements(
+          userId,
+          messageId,
+          message.payload,
+        )
       : [];
 
     return { ...message, attachments };

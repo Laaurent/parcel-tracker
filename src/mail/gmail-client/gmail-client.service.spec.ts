@@ -83,7 +83,7 @@ describe('GmailClientService', () => {
 
   describe('getAttachments', () => {
     it('should return attachments', async () => {
-      const userId = 'test-user';
+      const userId = '123';
       const messageId = 'test-message';
       const mockMessage = { payload: {} };
       const oauth2Client = new google.auth.OAuth2();
@@ -104,6 +104,7 @@ describe('GmailClientService', () => {
         id: messageId,
       });
       expect(attachmentService.lookUpAttachements).toHaveBeenCalledWith(
+        userId,
         messageId,
         mockMessage.payload,
       );

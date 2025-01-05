@@ -36,7 +36,7 @@ describe('MailService', () => {
   });
 
   it('should get message details', async () => {
-    const userId = 'user1';
+    const userId = '123';
     const messageId = 'message1';
     const messageDetails = { id: messageId } as Mail;
     mockGmailClientService.getMessageDetails.mockResolvedValue(messageDetails);
@@ -51,7 +51,7 @@ describe('MailService', () => {
   });
 
   it('should get messages', async () => {
-    const userId = 'user1';
+    const userId = '123';
     const messages = [{ id: 'message1' }] as Mail[];
     mockGmailClientService.getMessages.mockResolvedValue(messages);
     jest.spyOn(service, 'getDetailedMessages').mockResolvedValue(messages);
@@ -64,7 +64,7 @@ describe('MailService', () => {
   });
 
   it('should get all messages with query', async () => {
-    const userId = 'user1';
+    const userId = '123';
     const query = 'test';
     const messages = [{ id: 'message1' }] as Mail[];
     mockGmailClientService.getAllMessages.mockResolvedValue(messages);
@@ -81,7 +81,7 @@ describe('MailService', () => {
   });
 
   it('should get attachments', async () => {
-    const userId = 'user1';
+    const userId = '123';
     const messageId = 'message1';
     const attachments = [{ id: 'attachment1' }];
     mockGmailClientService.getAttachments.mockResolvedValue(attachments);
@@ -96,7 +96,7 @@ describe('MailService', () => {
   });
 
   it('should get attachment details', async () => {
-    const userId = 'user1';
+    const userId = '123';
     const attachmentId = 'attachment1';
     const messageId = 'message1';
     const attachmentDetails = { id: attachmentId };
@@ -119,7 +119,7 @@ describe('MailService', () => {
   });
 
   it('should get invoices', async () => {
-    const userId = 'user1';
+    const userId = '123';
     const messages = [
       {
         id: 'message1',
@@ -136,7 +136,7 @@ describe('MailService', () => {
     expect(result).toEqual([
       {
         id: 'message1',
-        messageUrl: 'http://localhost:3000/mail/message/message1',
+        messageUrl: 'http://localhost:3000/mail/123/message/message1',
         subject: 'Invoice',
         snippet: 'snippet',
         attachments: [],

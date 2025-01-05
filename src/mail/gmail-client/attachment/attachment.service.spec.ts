@@ -35,7 +35,7 @@ describe('AttachmentService', () => {
 
   it('should return empty array if payload has no parts', () => {
     const payload: Payload = { parts: null };
-    const result = service.lookUpAttachements('messageId', payload);
+    const result = service.lookUpAttachements('123', 'messageId', payload);
     expect(result).toEqual([]);
   });
 
@@ -56,25 +56,25 @@ describe('AttachmentService', () => {
         },
       ],
     };
-    const result = service.lookUpAttachements('messageId', payload);
+    const result = service.lookUpAttachements('123', 'messageId', payload);
     expect(result).toEqual([
       {
         attachmentId: '123',
         filename: 'file1.txt',
         mimeType: 'text/plain',
         attachmentUrl:
-          'http://localhost:3000/mail/message/messageId/attachment/123',
+          'http://localhost:3000/mail/123/message/messageId/attachment/123',
         attachementDownloadUrl:
-          'http://localhost:3000/mail/message/messageId/attachment/123/download',
+          'http://localhost:3000/mail/123/message/messageId/attachment/123/download',
       },
       {
         attachmentId: '456',
         filename: 'file2.jpg',
         mimeType: 'image/jpeg',
         attachmentUrl:
-          'http://localhost:3000/mail/message/messageId/attachment/456',
+          'http://localhost:3000/mail/123/message/messageId/attachment/456',
         attachementDownloadUrl:
-          'http://localhost:3000/mail/message/messageId/attachment/456/download',
+          'http://localhost:3000/mail/123/message/messageId/attachment/456/download',
       },
     ]);
   });
@@ -96,16 +96,16 @@ describe('AttachmentService', () => {
         },
       ],
     };
-    const result = service.lookUpAttachements('messageId', payload);
+    const result = service.lookUpAttachements('123', 'messageId', payload);
     expect(result).toEqual([
       {
         attachmentId: '123',
         filename: 'file1.txt',
         mimeType: 'text/plain',
         attachmentUrl:
-          'http://localhost:3000/mail/message/messageId/attachment/123',
+          'http://localhost:3000/mail/123/message/messageId/attachment/123',
         attachementDownloadUrl:
-          'http://localhost:3000/mail/message/messageId/attachment/123/download',
+          'http://localhost:3000/mail/123/message/messageId/attachment/123/download',
       },
     ]);
   });
@@ -113,7 +113,7 @@ describe('AttachmentService', () => {
   it('should log a debug message when looking up attachments', () => {
     const loggerSpy = jest.spyOn(service['logger'], 'debug');
     const payload: Payload = { parts: null };
-    service.lookUpAttachements('messageId', payload);
+    service.lookUpAttachements('123', 'messageId', payload);
     expect(loggerSpy).toHaveBeenCalledWith(
       'Looking up attachments for message messageId',
     );
